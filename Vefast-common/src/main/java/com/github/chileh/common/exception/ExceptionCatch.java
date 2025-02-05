@@ -21,7 +21,7 @@ public class ExceptionCatch {
     public <T> ResponseResult<T> exception(Exception e){
         log.error("catch exception:{}",e.getMessage(), e);
 
-        return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
+        return ResponseResult.error(AppHttpCodeEnum.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -33,6 +33,6 @@ public class ExceptionCatch {
     @ResponseBody
     public <T> ResponseResult<T> exception(CustomException e){
         log.error("catch exception: {}", e.getMessage(), e);
-        return ResponseResult.errorResult(e.getAppHttpCodeEnum());
+        return ResponseResult.error(e.getAppHttpCodeEnum());
     }
 }

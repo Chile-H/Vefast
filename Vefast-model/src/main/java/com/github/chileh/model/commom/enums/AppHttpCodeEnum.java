@@ -2,38 +2,63 @@ package com.github.chileh.model.commom.enums;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
 public enum AppHttpCodeEnum {
-    // 成功段固定为200
-    SUCCESS(200,"操作成功"),
-    // 登录段1~50
-    NEED_LOGIN(1,"需要登录后操作"),
-    LOGIN_PASSWORD_ERROR(2,"密码错误"),
-    // TOKEN50~100
-    TOKEN_INVALID(50,"无效的TOKEN"),
-    TOKEN_EXPIRE(51,"TOKEN已过期"),
-    TOKEN_REQUIRE(52,"TOKEN是必须的"),
-    // SIGN验签 100~120
-    SIGN_INVALID(100,"无效的SIGN"),
-    SIG_TIMEOUT(101,"SIGN已过期"),
-    // 参数错误 500~1000
-    PARAM_REQUIRE(500,"缺少参数"),
-    PARAM_INVALID(501,"无效参数"),
-    PARAM_IMAGE_FORMAT_ERROR(502,"图片格式有误"),
-    SERVER_ERROR(503,"服务器内部错误"),
-    // 数据错误 1000~2000
-    DATA_EXIST(1000,"数据已经存在"),
-    AP_USER_DATA_NOT_EXIST(1001,"ApUser数据不存在"),
-    DATA_NOT_EXIST(1002,"数据不存在"),
-    // 数据错误 3000~3500
-    NO_OPERATOR_AUTH(3000,"无权限操作"),
-    NEED_ADMIN(3001,"需要管理员权限");
+    // region 2xx Success
+    SUCCESS(200, "操作成功"),
+    // endregion
 
-    final int code;
-    final String errorMessage;
+    // region 4xx Client Errors
+    BAD_REQUEST(400, "请求参数错误"),
+    UNAUTHORIZED(401, "身份未认证"),
+    FORBIDDEN(403, "无操作权限"),
+    NOT_FOUND(404, "资源不存在"),
+    METHOD_NOT_ALLOWED(405, "不支持的请求方法"),
 
-    AppHttpCodeEnum(int code, String errorMessage){
+    // Authentication (407-410)
+    NEED_LOGIN(407, "需要登录后操作"),
+    LOGIN_FAILED(408, "登录失败"),
+    INVALID_CREDENTIALS(409, "用户名或密码错误"),
+    ACCOUNT_LOCKED(410, "账号已被锁定"),
+
+    // Token (411-415)
+    TOKEN_INVALID(411, "无效的访问令牌"),
+    TOKEN_EXPIRED(412, "访问令牌已过期"),
+    TOKEN_REQUIRED(413, "缺少访问令牌"),
+
+    // Validation (416-420)
+    PARAM_MISSING(416, "缺少必要参数"),
+    PARAM_INVALID(417, "参数格式错误"),
+    IMAGE_FORMAT_INVALID(418, "不支持的图片格式"),
+    // endregion
+
+    // region 5xx Server Errors
+    INTERNAL_SERVER_ERROR(500, "服务器内部错误"),
+    SERVICE_UNAVAILABLE(503, "服务暂不可用"),
+    // endregion
+
+    // region Business Errors (6000+)
+    DATA_CONFLICT(6001, "数据已存在"),
+    DATA_NOT_FOUND(6002, "数据不存在"),
+    OPERATION_LIMITED(6003, "操作频率过高"),
+    // endregion
+    ;
+
+    private final int code;
+    private final String message;
+
+    AppHttpCodeEnum(int code, String message) {
         this.code = code;
-        this.errorMessage = errorMessage;
+        this.message = message;
+    }
+
+    // 根据code查找枚举
+    public static AppHttpCodeEnum getByCode(int code) {
+        return Arrays.stream(values())
+                .filter(e -> e.code == code)
+                .findFirst()
+                .orElse(INTERNAL_SERVER_ERROR);
     }
 }

@@ -14,6 +14,12 @@ public class AppJwtUtil {
     // 最小刷新间隔(S)
     private static final int REFRESH_TIME = 300;
 
+    /**
+     * 生成JWT Token
+     *
+     * @param id 用户ID，作为JWT的主体
+     * @return 生成的JWT Token字符串
+     */
     // 生成JWT令牌
     public static String getToken(Long id){
         Map<String, Object> claimMaps = new HashMap<>();
@@ -21,7 +27,7 @@ public class AppJwtUtil {
         claimMaps.put("jti", UUID.randomUUID().toString());  // 自定义唯一标识符
         long currentTime = System.currentTimeMillis();
         return Jwts.builder()
-                .issuedAt(new Date(currentTime))  //签发时间
+                .issuedAt(new Date(currentTime))  //设置JWT的签发时间
                 .subject("system")  //设置主题
                 .issuer("laoli") //设置签发者
                 .audience().add("app").and()    //设置接收者

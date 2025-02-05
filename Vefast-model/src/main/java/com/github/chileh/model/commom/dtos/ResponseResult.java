@@ -4,97 +4,76 @@ import com.github.chileh.model.commom.enums.AppHttpCodeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.Instant;
 
-/**
- * 通用的结果返回类
- * @param <T>
- */
 @Data
 public class ResponseResult<T> implements Serializable {
-
-    private String host;
-
     private Integer code;
-
-    private String errorMessage;
-
+    private String message;
     private T data;
+    private Instant timestamp;
+    private String path;  // 请求路径
 
-    public ResponseResult() {
-        this.code = 200;
+    // 提供受保护的无参构造器（满足子类/反序列化需求）
+    protected ResponseResult() {
+        this.timestamp = Instant.now();
     }
 
-    public ResponseResult(Integer code, T data) {
+    // 私有化全参构造器
+    private ResponseResult(Integer code, String message, T data) {
         this.code = code;
+        this.message = message;
         this.data = data;
+        this.timestamp = Instant.now();
     }
 
-    public ResponseResult(Integer code, String msg, T data) {
-        this.code = code;
-        this.errorMessage = msg;
-        this.data = data;
+    // region 成功响应
+    public static <T> ResponseResult<T> success() {
+        return success(null);
     }
 
-    public ResponseResult(Integer code, String msg) {
-        this.code = code;
-        this.errorMessage = msg;
+    public static <T> ResponseResult<T> success(T data) {
+        return create(AppHttpCodeEnum.SUCCESS, data);
     }
 
-    public static <T> ResponseResult<T> errorResult(int code, String msg) {
-        ResponseResult<T> result = new ResponseResult<>();
-        return result.error(code, msg);
+    public static <T> ResponseResult<T> success(T data, String customMessage) {
+        ResponseResult<T> result = create(AppHttpCodeEnum.SUCCESS, data);
+        result.setMessage(customMessage);
+        return result;
+    }
+    // endregion
+
+    // region 错误响应
+    public static <T> ResponseResult<T> error(AppHttpCodeEnum codeEnum) {
+        return create(codeEnum, null);
     }
 
-    public static <T> ResponseResult<T> okResult(int code, String msg) {
-        ResponseResult<T> result = new ResponseResult<>();
-        return result.ok(code, null, msg);
-    }
-
-    public static <T> ResponseResult<T> okResult(T data) {
-        ResponseResult<T> result = setAppHttpCodeEnum(AppHttpCodeEnum.SUCCESS, AppHttpCodeEnum.SUCCESS.getErrorMessage());
-        if(data!=null) {
-            result.setData(data);
-        }
+    public static <T> ResponseResult<T> error(AppHttpCodeEnum codeEnum, String customMessage) {
+        ResponseResult<T> result = create(codeEnum, null);
+        result.setMessage(customMessage);
         return result;
     }
 
-    public static <T> ResponseResult<T> errorResult(AppHttpCodeEnum enums){
-        return setAppHttpCodeEnum(enums,enums.getErrorMessage());
+    public static <T> ResponseResult<T> error(int code, String message) {
+        ResponseResult<T> result = new ResponseResult<>();
+        result.setCode(code);
+        result.setMessage(message);
+        return result;
     }
+    // endregion
 
-    public static <T> ResponseResult<T> errorResult(AppHttpCodeEnum enums, String errorMessage){
-        return setAppHttpCodeEnum(enums,errorMessage);
-    }
-
-    public static <T> ResponseResult<T> setAppHttpCodeEnum(AppHttpCodeEnum enums){
-        return okResult(enums.getCode(),enums.getErrorMessage());
-    }
-
-    private static <T> ResponseResult<T> setAppHttpCodeEnum(AppHttpCodeEnum enums, String errorMessage){
-        return okResult(enums.getCode(),errorMessage);
-    }
-
-    public ResponseResult<T> error(Integer code, String msg) {
-        this.code = code;
-        this.errorMessage = msg;
+    // region Builder-style Methods
+    public ResponseResult<T> path(String path) {
+        this.path = path;
         return this;
     }
+    // endregion
 
-    public ResponseResult<T> ok(Integer code, T data) {
-        this.code = code;
-        this.data = data;
-        return this;
-    }
-
-    public ResponseResult<T> ok(Integer code, T data, String msg) {
-        this.code = code;
-        this.data = data;
-        this.errorMessage = msg;
-        return this;
-    }
-
-    public ResponseResult<T> ok(T data) {
-        this.data = data;
-        return this;
+    private static <T> ResponseResult<T> create(AppHttpCodeEnum codeEnum, T data) {
+        ResponseResult<T> result = new ResponseResult<>();
+        result.setCode(codeEnum.getCode());
+        result.setMessage(codeEnum.getMessage());
+        result.setData(data);
+        return result;
     }
 }
