@@ -12,7 +12,6 @@ public class ResponseResult<T> implements Serializable {
     private String message;
     private T data;
     private Instant timestamp;
-    private String path;  // 请求路径
 
     // 提供受保护的无参构造器（满足子类/反序列化需求）
     protected ResponseResult() {
@@ -59,13 +58,6 @@ public class ResponseResult<T> implements Serializable {
         result.setCode(code);
         result.setMessage(message);
         return result;
-    }
-    // endregion
-
-    // region Builder-style Methods
-    public ResponseResult<T> path(String path) {
-        this.path = path;
-        return this;
     }
     // endregion
 
