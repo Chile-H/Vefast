@@ -10,11 +10,6 @@ spring:
         watch-delay: 30000  # 延长等待时间，单位毫秒
       config:
         server-addr: 192.168.189.128:8848
-        file-extension: YAML
+        file-extension: yaml
   config:
-    import: nacos:Vefast-user.YAML
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/leadnews_user?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-    username: root
-    password: 123456
+    import: nacos:Vefast-user

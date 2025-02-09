@@ -5,12 +5,12 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.*;
 
-public class AppJwtUtil {
+public class JwtUtil {
 
     // TOKEN的有效期一天（S）
     private static final int TOKEN_TIME_OUT = 3_600;
-    // 加密KEY
-    private static final String TOKEN_ENCRYPT_KEY = "MDk4ZjZiY2Q0NjIxZDM3M2NhZGU0ZTgzMjYyN2I0ZjY";
+    // 用于生成密钥的字符串
+        private static final String TOKEN_ENCRYPT_KEY = "MDk4ZjZiY2Q0NjIxZDM3M2NhZGU0ZTgzMjYyN2I0ZjY";
     // 最小刷新间隔(S)
     private static final int REFRESH_TIME = 300;
 
@@ -21,7 +21,7 @@ public class AppJwtUtil {
      * @return 生成的JWT Token字符串
      */
     // 生成JWT令牌
-    public static String getToken(Long id){
+    public static String generateToken(Long id){
         Map<String, Object> claimMaps = new HashMap<>();
         claimMaps.put("id",id);
         claimMaps.put("jti", UUID.randomUUID().toString());  // 自定义唯一标识符
@@ -32,7 +32,7 @@ public class AppJwtUtil {
                 .issuer("laoli") //设置签发者
                 .audience().add("app").and()    //设置接收者
                 .compressWith(Jwts.ZIP.GZIP)  //数据压缩方式
-                .signWith(generalKey()) //设置签名，自动推断算法
+                    .signWith(generateKey(), Jwts.SIG.HS256) //设置签名，自动推断算法
                 .expiration(new Date(currentTime + TOKEN_TIME_OUT * 1000))  //过期时间戳
                 .claims(claimMaps) //将自定义的声明（Claims）添加到 JWT 的有效载荷中
                 .compact();
@@ -46,18 +46,18 @@ public class AppJwtUtil {
      */
     private static Jws<Claims> getJws(String token) {
         return Jwts.parser()
-                .verifyWith(generalKey())
+                .verifyWith(generateKey())
                 .build()
                 .parseSignedClaims(token);
     }
 
     /**
-     * 获取payload body信息
+     * 获取payload信息
      *
      * @param token JWT令牌字符串
      * @return 解析后的Claims对象，包含JWT的有效载荷信息；如果JWT过期，则返回null
      */
-    public static Claims getClaimsBody(String token) {
+    public static Claims getClaims(String token) {
         try {
             return getJws(token).getPayload();
         }catch (ExpiredJwtException e){
@@ -66,12 +66,12 @@ public class AppJwtUtil {
     }
 
     /**
-     * 获取header body信息
+     * 获取header信息
      *
      * @param token JWT令牌字符串，用于解析JWT的头部信息
      * @return 解析后的JwsHeader对象，包含JWT的头部信息；如果JWT过期或解析失败，则返回null
      */
-    public static JwsHeader getHeaderBody(String token) {
+    public static JwsHeader getHeader(String token) {
         return getJws(token).getHeader();
     }
 
@@ -103,12 +103,12 @@ public class AppJwtUtil {
     }
 
     /**
-     * 由字符串生成加密key
+     * 由字符串生成密钥Key
      *
      * @return 生成的SecretKey对象，用于AES加密
      */
-    public static SecretKey generalKey() {
-        byte[] encodedKey = Base64.getEncoder().encode(TOKEN_ENCRYPT_KEY.getBytes());
-        return new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
+    public static SecretKey generateKey() {
+        byte[] decodedKey = Base64.getDecoder().decode(TOKEN_ENCRYPT_KEY);
+        return new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA256");
     }
 }

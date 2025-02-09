@@ -1,6 +1,6 @@
 package com.github.chileh.gateway.filter;
 
-import com.github.chileh.utils.AppJwtUtil;
+import com.github.chileh.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,6 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
             return chain.filter(exchange);
         }
 
-
         //3.获取token
         String token = request.getHeaders().getFirst("token");
 
@@ -45,9 +44,9 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
 
         //5.判断token是否有效
         try {
-            Claims claimsBody = AppJwtUtil.getClaimsBody(token);
+            Claims claimsBody = JwtUtil.getClaims(token);
             //是否是过期
-            int result = AppJwtUtil.verifyToken(claimsBody);
+            int result = JwtUtil.verifyToken(claimsBody);
             if(result == 1 || result  == 2){
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return response.setComplete();

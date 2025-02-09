@@ -6,14 +6,17 @@ import com.github.chileh.model.commom.dtos.ResponseResult;
 import com.github.chileh.model.commom.enums.AppHttpCodeEnum;
 import com.github.chileh.model.users.dtos.LoginDto;
 import com.github.chileh.model.users.pojos.ApUser;
+import com.github.chileh.model.users.vo.LoginVo;
 import com.github.chileh.service.user.mapper.ApUserMapper;
 import com.github.chileh.service.user.service.ApUserService;
-import com.github.chileh.utils.AppJwtUtil;
+import com.github.chileh.utils.JwtUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,9 +26,10 @@ public class ApUserServiceImpl extends ServiceImpl<ApUserMapper, ApUser> impleme
 
     /**
      * app登录功能
-     * @param dto 登录请求的数据传输对象，包含用户名、密码等登录信息
+     * @param dto 登录请求的数据传输对象，包含手机号、密码
      * @return 登录结果，包含是否成功、错误信息等
      */
+    @Override
     public ResponseResult<Map<String,Object>> login(LoginDto dto){
         //1. 正常登录 用户名和密码
         if(StringUtils.hasText(dto.getPhone()) && StringUtils.hasText(dto.getPassword())){
@@ -38,25 +42,43 @@ public class ApUserServiceImpl extends ServiceImpl<ApUserMapper, ApUser> impleme
             //1.2 验证密码
             String salt = dbUser.getSalt();
             String password = dto.getPassword();
-            String hashedpswd = DigestUtils.md5DigestAsHex((password + salt).getBytes());
+            String hashedpswd;
+
+            try {
+                //获取SHA-256的MessageDigest实例
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                //更新盐值和密码到MessageDigest实例
+                digest.update((password+salt).getBytes());
+                //计算哈希值
+                byte[] hashedBytes = digest.digest();
+                //将哈希值转换为Base64编码的字符串
+                hashedpswd = Base64.getEncoder().encodeToString(hashedBytes);
+            } catch (Exception e) {
+                throw new RuntimeException("将密码使用SHA-256生成哈希值时出错", e);
+            }
+
             if(!hashedpswd.equals(dbUser.getPassword())){
                 return ResponseResult.error(AppHttpCodeEnum.INVALID_CREDENTIALS,"密码错误");
             }
 
             //1.3 返回jwt token
-            String token = AppJwtUtil.getToken(dbUser.getId().longValue());
+            LoginVo loginVo = new LoginVo();
+            BeanUtils.copyProperties(dbUser, loginVo);
+
+            String token = JwtUtil.generateToken(dbUser.getId().longValue());
             Map<String, Object> map = new HashMap<>();
             map.put("token",token);
-            map.put("user",dbUser);
+            map.put("user",loginVo);
 
-            return ResponseResult.success(map);
+            return ResponseResult.success(map, "登录成功");
         }else{
             //2. 游客登录
             Map<String, Object> map = new HashMap<>();
             map.put("token",0L);
 
-            return ResponseResult.success(map);
+            return ResponseResult.success(map,"游客登录成功");
         }
 
     }
+
 }
